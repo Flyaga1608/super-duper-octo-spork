@@ -1,0 +1,53 @@
+import telebot
+import random
+
+
+token='фiг вам а нi токiн'
+bot=telebot.TeleBot(token)
+
+
+def generate_problem(difficulty):
+    if difficulty == 'easy':
+        a, b = random.randint(1, 10), random.randint(1, 10)
+        return f"{a} + {b} = ?", a + b
+    elif difficulty == 'medium':
+        a, b = random.randint(10, 50), random.randint(1, 20)
+        return f"{a} - {b} = ?", a - b
+    elif difficulty == 'hard':
+        a, b = random.randint(1, 20), random.randint(1, 20)
+        return f"{a} * {b} = ?", a * b
+    else:
+        return None, None
+
+
+@bot.message_handler(commands=['start'])
+def start(message):
+    bot.send_message(message.chat.id,
+                     "Привет! Выберите сложность задач:\n"
+                     "/easy - Легкие задачи\n"
+                     "/medium - Средние задачи\n"
+                     "/hard - Сложные задачи")
+
+
+@bot.message_handler(commands=['easy', 'medium', 'hard'])
+def choose_difficulty(message):
+    difficulty = message.text[1:]
+    problem, answer = generate_problem(difficulty)
+    bot.send_message(message.chat.id, f"Решите задачу: {problem}")
+    bot.send_message(message.chat.id, "Введите ваш ответ:")
+    bot.register_next_step_handler(message, check_answer, answer)
+
+
+def check_answer(message, correct_answer):
+    try:
+        user_answer = int(message.text)
+        if user_answer == correct_answer:
+            bot.send_message(message.chat.id, "Правильно! Хотите решить еще одну задачу? Выберите сложность: /easy, /medium, /hard.")
+        else:
+            bot.send_message(message.chat.id, f"Неправильно. Правильный ответ: {correct_answer}. Хотите попробовать еще раз? Выберите сложность: /easy, /medium, /hard.")
+    except ValueError:
+        bot.send_message(message.chat.id, "Пожалуйста, введите числовой ответ.")
+
+
+if __name__ == '__main__':
+    bot.polling(none_stop=True)
